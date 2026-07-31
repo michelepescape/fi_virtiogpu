@@ -6,7 +6,7 @@
 - [2. Modello di Guasto (Fault Model)](#2-modello-di-guasto-fault-model)
 - [3. Setup e Prerequisiti](#3-setup-e-prerequisiti)
 - [4. Instrumentazione llama.cpp](#4-instrumentazione-llama)
-- [5. Esecuzione delle Campagne](#4-esecuzione-delle-campagne)
+- [5. Esecuzione della Campagna](#4-esecuzione-della-campagna)
 - [6. Analisi dei Risultati](#5-analisi-dei-risultati)
 
 ---
@@ -27,9 +27,9 @@ La fault injection sarà effettuata su chiamate ioctl e funzioni
 della libreria virtio-gpu ([drivers/gpu/drm/virtio/virtgpu_drv.h](https://github.com/torvalds/linux/tree/master/drivers/gpu/drm/virtio))
 utilizzando il meccanismo delle kprobe.
 
+<img width="1494" height="1883" alt="diagramma" src="https://github.com/user-attachments/assets/9e2ea790-3d82-4e9e-b499-4856d0edd2fb" />
 
-
-## 2. Modello di Guasto (Fault Model)
+## 2. Fault Model
 
 Al momento, per ognuno dei punti di iniezione si iniettano i seguenti fallimenti:
 
