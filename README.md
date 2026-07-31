@@ -27,7 +27,7 @@ La fault injection sarà effettuata su chiamate ioctl e funzioni
 della libreria virtio-gpu ([drivers/gpu/drm/virtio/virtgpu_drv.h](https://github.com/torvalds/linux/tree/master/drivers/gpu/drm/virtio))
 utilizzando il meccanismo delle kprobe.
 
-<img width="1494" height="1883" alt="diagramma" src="https://github.com/user-attachments/assets/9e2ea790-3d82-4e9e-b499-4856d0edd2fb" />
+<img width="600" height="800" alt="diagramma" src="https://github.com/user-attachments/assets/9e2ea790-3d82-4e9e-b499-4856d0edd2fb" />
 
 ## 2. Fault Model
 
