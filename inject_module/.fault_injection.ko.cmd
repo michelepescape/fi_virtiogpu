@@ -1,0 +1,1 @@
+savedcmd_fault_injection.ko := ld -r -m elf_x86_64 --fatal-warnings -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T /home/mp/Downloads/linux-7.1.2/linux/scripts/module.lds -o fault_injection.ko fault_injection.o fault_injection.mod.o .module-common.o
