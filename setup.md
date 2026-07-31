@@ -49,7 +49,8 @@ sudo visudo
 
 Al suo interno inseriamo la stringa `NOME_UTENTE ALL=(ALL) NOPASSWD: ALL`
 
-![image](api/attachments/rOnlVxQkRmfm/image/image.png)
+<img width="535" height="386" alt="Screenshot From 2026-07-27 13-05-28" src="https://github.com/user-attachments/assets/bf3e5915-01ec-45c3-871b-15b33c8fb8fc" />
+
 
 Per la creazione della chaive ssh invece:
 
