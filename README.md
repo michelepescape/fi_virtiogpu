@@ -1,4 +1,4 @@
-# Fault Injection su VirtioGPU durante inferenza
+# Fault Injection su VirtioGPU 
 
 
 ## Indice
