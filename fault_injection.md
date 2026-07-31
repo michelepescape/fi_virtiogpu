@@ -12,7 +12,7 @@ strace -f -tt -e trace=ioctl ~/llama.cpp/build/bin/llama-cli \
 
 L'analisi dell'output ha permesso di individuare specifiche chiamate del driver `drm/virtgpu` (es. `virtio_gpu_execbuffer_ioctl`, `virtio_gpu_resource_create_blob_ioctl`). Questo ha fornito i target precisi da agganciare nel kernel.
 
-![image](api/attachments/Cljrpk7qoGtN/image/image.png)
+<img width="1851" height="527" alt="Screenshot From 2026-06-29 19-37-51" src="https://github.com/user-attachments/assets/3355dc0b-a76a-47f1-a5f4-32cd06157264" />
 
 ## Kprobe vs Kretprobe
 
