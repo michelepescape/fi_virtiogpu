@@ -1,0 +1,9 @@
+{
+    "status": "SUCCESS",
+    "exit_code": 0,
+    "phase": "DECODE",
+    "token": 2,
+    "fault_type": "error",
+    "fault_val": -5,
+    "target_function": "virtio_gpu_resource_create_blob_ioctl"
+}

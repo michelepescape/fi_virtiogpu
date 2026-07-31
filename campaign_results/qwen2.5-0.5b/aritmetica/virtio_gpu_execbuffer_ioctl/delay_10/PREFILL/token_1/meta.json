@@ -1,0 +1,9 @@
+{
+    "status": "SUCCESS",
+    "exit_code": 0,
+    "phase": "PREFILL",
+    "token": 1,
+    "fault_type": "delay",
+    "fault_val": 10,
+    "target_function": "virtio_gpu_execbuffer_ioctl"
+}

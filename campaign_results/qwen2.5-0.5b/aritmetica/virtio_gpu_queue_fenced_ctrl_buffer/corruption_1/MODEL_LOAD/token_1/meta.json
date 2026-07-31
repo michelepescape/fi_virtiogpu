@@ -1,0 +1,9 @@
+{
+    "status": "CRASH (Codice 255)",
+    "exit_code": 255,
+    "phase": "MODEL_LOAD",
+    "token": 1,
+    "fault_type": "corruption",
+    "fault_val": 1,
+    "target_function": "virtio_gpu_queue_fenced_ctrl_buffer"
+}

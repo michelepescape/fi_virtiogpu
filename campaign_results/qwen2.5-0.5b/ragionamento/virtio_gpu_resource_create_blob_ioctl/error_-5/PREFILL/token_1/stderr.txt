@@ -1,0 +1,6 @@
+[FI] config: phase=PREFILL token=1 fault_code=-5 delay_ms=0 burst=1 occ=1 corruption=0
+[FI] FAULT ARMED code=-5 delay=  0ms burst=1 occ=1 corruption=0 tid=1310 phase=PREFILL
+ggml_vulkan: Device memory allocation of size 52416 failed.
+ggml_vulkan: vk::Device::mapMemory: ErrorOutOfDeviceMemory
+0.01.044.487 E srv  update_slots: decode() failed: vk::Device::mapMemory: ErrorOutOfDeviceMemory
+0.01.044.496 E srv    send_error: task id = 0, error: decode() failed: vk::Device::mapMemory: ErrorOutOfDeviceMemory

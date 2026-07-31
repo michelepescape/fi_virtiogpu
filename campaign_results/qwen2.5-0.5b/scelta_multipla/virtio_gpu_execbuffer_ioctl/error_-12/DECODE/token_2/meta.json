@@ -1,0 +1,9 @@
+{
+    "status": "SUCCESS",
+    "exit_code": 0,
+    "phase": "DECODE",
+    "token": 2,
+    "fault_type": "error",
+    "fault_val": -12,
+    "target_function": "virtio_gpu_execbuffer_ioctl"
+}

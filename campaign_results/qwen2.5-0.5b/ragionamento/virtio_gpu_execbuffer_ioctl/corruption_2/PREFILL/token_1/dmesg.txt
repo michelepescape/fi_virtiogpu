@@ -1,0 +1,1 @@
+[VM IN HANG - dmesg irraggiungibile via SSH]

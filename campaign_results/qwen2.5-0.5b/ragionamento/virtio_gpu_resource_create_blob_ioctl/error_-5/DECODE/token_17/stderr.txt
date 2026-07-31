@@ -1,0 +1,2 @@
+[FI] config: phase=DECODE token=17 fault_code=-5 delay_ms=0 burst=1 occ=1 corruption=0
+[FI] FAULT ARMED code=-5 delay=  0ms burst=1 occ=1 corruption=0 tid=1308 phase=DECODE

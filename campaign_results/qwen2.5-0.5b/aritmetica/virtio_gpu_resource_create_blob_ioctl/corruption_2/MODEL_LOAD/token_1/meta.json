@@ -1,0 +1,9 @@
+{
+    "status": "SUCCESS",
+    "exit_code": 0,
+    "phase": "MODEL_LOAD",
+    "token": 1,
+    "fault_type": "corruption",
+    "fault_val": 2,
+    "target_function": "virtio_gpu_resource_create_blob_ioctl"
+}

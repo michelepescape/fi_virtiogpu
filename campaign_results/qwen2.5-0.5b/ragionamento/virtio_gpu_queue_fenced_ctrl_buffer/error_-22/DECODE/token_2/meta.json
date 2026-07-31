@@ -1,0 +1,9 @@
+{
+    "status": "SUCCESS",
+    "exit_code": 0,
+    "phase": "DECODE",
+    "token": 2,
+    "fault_type": "error",
+    "fault_val": -22,
+    "target_function": "virtio_gpu_queue_fenced_ctrl_buffer"
+}

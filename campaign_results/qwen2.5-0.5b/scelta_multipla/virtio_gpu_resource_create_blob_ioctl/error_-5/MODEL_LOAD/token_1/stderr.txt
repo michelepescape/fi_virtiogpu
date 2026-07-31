@@ -1,0 +1,5 @@
+[FI] config: phase=MODEL_LOAD token=1 fault_code=-5 delay_ms=0 burst=1 occ=1 corruption=0
+[FI] FAULT ARMED code=-5 delay=  0ms burst=1 occ=1 corruption=0 tid=1303 phase=MODEL_LOAD
+0.00.456.486 E llama_model_load: error loading model: vk::Device::createFence: ErrorOutOfHostMemory
+0.00.456.498 E llama_model_load_from_file_impl: failed to load model
+0.00.456.526 E common_fit_params: encountered an error while trying to fit params to free device memory: failed to load model

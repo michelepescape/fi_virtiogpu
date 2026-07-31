@@ -1,0 +1,100 @@
+[    1.042329] systemd[1]: systemd-pcrphase-initrd.service - TPM PCR Barrier (initrd) skipped, unmet condition check ConditionSecurity=measured-uki
+[    1.044940] systemd[1]: Starting systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully...
+[    1.047391] systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+[    1.049125] systemd[1]: Finished systemd-network-generator.service - Generate Network Units from Kernel Command Line.
+[    1.049347] systemd-journald[120]: Collecting audit messages is disabled.
+[    1.051131] systemd[1]: Finished dracut-cmdline-ask.service - dracut ask for additional cmdline parameters.
+[    1.052631] systemd[1]: Finished systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+[    1.054074] systemd[1]: Reached target network-pre.target - Preparation for Network.
+[    1.055703] systemd[1]: Starting dracut-cmdline.service - dracut cmdline hook...
+[    1.057249] systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+[    1.063304] systemd[1]: Starting systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev...
+[    1.067350] systemd[1]: Finished systemd-sysctl.service - Apply Kernel Variables.
+[    1.070382] systemd[1]: Finished systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev.
+[    1.071131] systemd[1]: Reached target local-fs-pre.target - Preparation for Local File Systems.
+[    1.071942] systemd[1]: Reached target local-fs.target - Local File Systems.
+[    1.073356] systemd[1]: Started systemd-journald.service - Journal Service.
+[    1.363963] virtio_net virtio0 enp0s2: renamed from eth0
+[    1.640027] clocksource: Watchdog remote CPU 2 read timed out
+[    2.081274] EXT4-fs (dm-0): orphan cleanup on readonly fs
+[    2.081794] EXT4-fs (dm-0): mounted filesystem 8869fa03-ca13-420b-85b6-a393602d6ae8 ro with ordered data mode. Quota mode: none.
+[    2.184826] systemd-network (262) used greatest stack depth: 12872 bytes left
+[    2.241266] systemd-journald[120]: Received SIGTERM from PID 1 (systemd).
+[    2.281962] systemd[1]: systemd 259.5-0ubuntu3 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+[    2.281967] systemd[1]: Detected virtualization kvm.
+[    2.281978] systemd[1]: Detected architecture x86-64.
+[    2.292644] systemd[1]: bpf-restrict-fs: BPF LSM hook not enabled in the kernel, BPF LSM not supported.
+[    2.301449] systemd-system- (508) used greatest stack depth: 12328 bytes left
+[    2.324552] systemd[1]: /usr/lib/systemd/system/system-xfs_scrub.slice:15: Support for option CPUAccounting= has been removed and it is ignored
+[    2.348632] systemd[1]: /usr/lib/systemd/system/xfs_scrub_all.service:26: Support for option CPUAccounting= has been removed and it is ignored
+[    2.445618] systemd[1]: initrd-switch-root.service: Deactivated successfully.
+[    2.445722] systemd[1]: Stopped initrd-switch-root.service - Switch Root.
+[    2.446971] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 1.
+[    2.447355] systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+[    2.448295] systemd[1]: Created slice system-systemd\x2dfsck.slice - Slice /system/systemd-fsck.
+[    2.449239] systemd[1]: Created slice system-xfs_scrub.slice - xfs_scrub background service slice.
+[    2.450065] systemd[1]: Created slice user.slice - User and Session Slice.
+[    2.450705] systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+[    2.451524] systemd[1]: Set up automount proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point.
+[    2.452179] systemd[1]: Expecting device dev-disk-by\x2duuid-c0d399b0\x2d9f33\x2d4b62\x2d8a9e\x2dfe63416db891.device - /dev/disk/by-uuid/c0d399b0-9f33-4b62-8a9e-fe63416db891...
+[    2.452846] systemd[1]: Reached target imports.target - Image Downloads.
+[    2.453452] systemd[1]: Stopped target initrd-switch-root.target - Switch Root.
+[    2.454071] systemd[1]: Stopped target initrd-fs.target - Initrd File Systems.
+[    2.454690] systemd[1]: Stopped target initrd-root-fs.target - Initrd Root File System.
+[    2.455333] systemd[1]: Reached target integritysetup.target - Local Integrity Protected Volumes.
+[    2.456020] systemd[1]: Reached target slices.target - Slice Units.
+[    2.456604] systemd[1]: Reached target snapd.mounts-pre.target - Mounting snaps.
+[    2.457225] systemd[1]: Reached target snapd.mounts.target - Mounted snaps.
+[    2.457837] systemd[1]: Reached target time-set.target - System Time Set.
+[    2.458478] systemd[1]: Reached target veritysetup.target - Local Verity Protected Volumes.
+[    2.459223] systemd[1]: Listening on dm-event.socket - Device-mapper event daemon FIFOs.
+[    2.459916] systemd[1]: Listening on lvm2-lvmpolld.socket - LVM2 poll daemon socket.
+[    2.460607] systemd[1]: Listening on syslog.socket - Syslog Socket.
+[    2.461953] systemd[1]: Listening on systemd-ask-password.socket - Query the User Interactively for a Password.
+[    2.463165] systemd[1]: Listening on systemd-creds.socket - Credential Encryption/Decryption.
+[    2.464505] systemd[1]: Listening on systemd-factory-reset.socket - Factory Reset Management.
+[    2.465978] systemd[1]: Listening on systemd-mute-console.socket - Console Output Muting Service Socket.
+[    2.466746] systemd[1]: Listening on systemd-networkd-resolve-hook.socket - Network Management Resolve Hook Socket.
+[    2.467541] systemd[1]: Listening on systemd-networkd-varlink.socket - Network Management Varlink Socket.
+[    2.468303] systemd[1]: Listening on systemd-networkd.socket - Network Management Netlink Socket.
+[    2.468969] systemd[1]: systemd-pcrextend.socket - TPM PCR Measurements skipped, unmet condition check ConditionSecurity=measured-uki
+[    2.468985] systemd[1]: systemd-pcrlock.socket - Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[    2.469056] systemd[1]: Listening on systemd-resolved-monitor.socket - Resolve Monitor Varlink Socket.
+[    2.469747] systemd[1]: Listening on systemd-resolved-varlink.socket - Resolve Service Varlink Socket.
+[    2.470470] systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+[    2.471176] systemd[1]: Listening on systemd-udevd-varlink.socket - udev Varlink Socket.
+[    2.472470] systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
+[    2.473628] systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+[    2.480043] systemd[1]: Mounting sys-kernel-debug.mount - Kernel Debug File System...
+[    2.481335] systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+[    2.484227] systemd[1]: Starting systemd-journald.service - Journal Service...
+[    2.485755] systemd[1]: Starting keyboard-setup.service - Set the console keyboard layout...
+[    2.486415] systemd[1]: kmod-static-nodes.service - Create List of Static Device Nodes skipped, unmet condition check ConditionFileNotEmpty=/lib/modules/7.1.2/modules.devname
+[    2.486963] systemd[1]: Starting lvm2-monitor.service - Monitoring of LVM2 mirrors, snapshots etc. using dmeventd or progress polling...
+[    2.488306] systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+[    2.490967] systemd[1]: Starting modprobe@dm_multipath.service - Load Kernel Module dm_multipath...
+[    2.491762] systemd[1]: modprobe@drm.service - Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[    2.492497] systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+[    2.495948] systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+[    2.497114] systemd-journald[522]: Collecting audit messages is disabled.
+[    2.497434] systemd[1]: netplan-ovs-cleanup.service - OpenVSwitch configuration for cleanup skipped, unmet condition check ConditionFileIsExecutable=/usr/bin/ovs-vsctl
+[    2.497567] systemd[1]: systemd-hibernate-clear.service - Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[    2.499945] systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+[    2.500642] systemd[1]: systemd-pcrmachine.service - TPM PCR Machine ID Measurement skipped, unmet condition check ConditionSecurity=measured-uki
+[    2.500674] systemd[1]: systemd-pcrproduct.service - TPM NvPCR Product ID Measurement skipped, unmet condition check ConditionSecurity=measured-uki
+[    2.501950] systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+[    2.503164] systemd[1]: Starting systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully...
+[    2.503952] systemd[1]: systemd-tpm2-setup-early.service - Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[    2.504963] systemd[1]: Starting systemd-udev-load-credentials.service - Load udev Rules from Credentials...
+[    2.507965] systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+[    2.510253] systemd[1]: Started systemd-journald.service - Journal Service.
+[    2.515344] EXT4-fs (dm-0): re-mounted 8869fa03-ca13-420b-85b6-a393602d6ae8 r/w.
+[    2.538322] Adding 2774012k swap on /swap.img.  Priority:-1 extents:4 across:3707900k 
+[    2.541698] systemd-journald[522]: Received client request to flush runtime journal.
+[    3.460743] EXT4-fs (vda2): mounted filesystem c0d399b0-9f33-4b62-8a9e-fe63416db891 r/w with ordered data mode. Quota mode: none.
+[    3.698934] loop0: detected capacity change from 0 to 8
+[    3.715646] virtio_net virtio0 enp0s1: renamed from enp0s2 (while UP)
+[    5.863322] fault_injection: loading out-of-tree module taints kernel.
+[    5.864974] fault_hook: Hook inserito su virtio_gpu_queue_fenced_ctrl_buffer. Pronto per il trigger.
+[    7.287008] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=-22, delay=0ms)
+[    7.288140] fault_hook: [FAULT #1] Sovrascrittura virtio_gpu_queue_fenced_ctrl_buffer: da 0 a -22
