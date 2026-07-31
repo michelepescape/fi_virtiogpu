@@ -150,7 +150,8 @@ sudo bash -c "echo 1 > events/kprobes/my_virtio_probe/enable"
 ```
 Eseguendo un carico sulla GPU (es. vulkaninfo --summary), il file /sys/kernel/debug/tracing/trace si popolerà con gli eventi catturati.
 
-![image](api/attachments/02mSh285QljT/image/image.png)
+<img width="792" height="538" alt="Screenshot From 2026-07-05 16-19-56" src="https://github.com/user-attachments/assets/6f7faff2-405a-486d-b4d2-4a2a65263d37" />
 
 
-Per la creazione del modulo: [fault_injection_module.md](fault_injection_module.md)
+
+Per la creazione del modulo: [fault_injection.md](fault_injection.md)
