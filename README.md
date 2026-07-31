@@ -3,7 +3,7 @@
 
 ## Indice
 - [1. Architettura del Sistema](#1-architettura-del-sistema)
-- [2. Modello di Guasto (Fault Model)](#2-fault-model)
+- [2. Fault Model](#2-fault-model)
 - [3. Setup e Prerequisiti](#3-setup)
 - [4. Instrumentazione llama.cpp](#4-instrumentazione-llamacpp)
 - [5. Esecuzione della Campagna](#5-esecuzione-della-campagna)
