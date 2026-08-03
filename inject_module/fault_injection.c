@@ -134,27 +134,6 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
         return 1; 
     }
     
-    // --- ZONA DI RICOGNIZIONE (RECON) ---
-    if (strcmp(func_name, "virtio_gpu_fence_ack") == 0) {
-        // Leggiamo i registri secondo la calling convention AMD64 (x86_64)
-        uint64_t offset = regs->dx; // 3° argomento
-        uint32_t stride = regs->r8; // 5° argomento
-        
-        pr_info("fault_hook: [RECON] transfer_to_host_3d | offset=%llu, stride=%u\n", 
-                (unsigned long long)offset, stride);
-        
-        // Se in futuro vorrai corromperli, lo farai qui. Es:
-        if (descriptor_corruption == 4) { // Nuovo caso ad-hoc
-            regs->dx = offset + 1024; // Spostiamo l'offset!
-            pr_info("fault_hook: [FI] Corrotto offset da %llu a %llu\n", 
-                    (unsigned long long)offset, (unsigned long long)regs->dx);
-        }
-    }
-    else if (strcmp(func_name, "virtio_gpu_ctrl_ack") == 0) {
-        // Questa prende solo (struct work_struct *work) in RDI. 
-        // Per ora ci basta sapere se e quante volte viene chiamata.
-        pr_info("fault_hook: [RECON] dequeue_ctrl_func | Bottom Half attivato (Risposta pronta!)\n");
-    }
     // ------------------------------------
     
     if (descriptor_corruption > 0){
