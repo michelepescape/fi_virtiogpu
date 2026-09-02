@@ -1,0 +1,6 @@
+[   10.364368] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.365656] fault_hook: [RECON] cmd_submit | ctx_id=1, data_size=24 byte
+[   10.365660] fault_hook [RAW SUBMIT]: 00000000: be 00 00 00 00 00 00 00 c0 f8 75 c8 75 55 00 00  ..........u.uU..
+[   10.365663] fault_hook [RAW SUBMIT]: 00000010: 90 19 0a 00 00 00 00 00                          ........
+[   10.365666] fault_hook: [DEBUG] cmd_submit intercettata! data_size=24 byte
+[   10.365668] [FI] Case 3 (SDC ZERO PARAMS): Cleared 16 bytes in ring at 0x5575c8801240

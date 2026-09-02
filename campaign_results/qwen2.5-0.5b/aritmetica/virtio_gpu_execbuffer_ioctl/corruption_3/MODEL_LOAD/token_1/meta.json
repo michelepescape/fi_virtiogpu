@@ -1,9 +1,13 @@
 {
-    "status": "SUCCESS",
-    "exit_code": 0,
+    "status": "HANG",
+    "exit_code": 124,
     "phase": "MODEL_LOAD",
     "token": 1,
     "fault_type": "corruption",
     "fault_val": 3,
-    "target_function": "virtio_gpu_execbuffer_ioctl"
+    "target_function": "virtio_gpu_execbuffer_ioctl",
+    "model": "qwen2.5-0.5b",
+    "prompt": "aritmetica",
+    "output_match": false,
+    "baseline_output": "Loading model... \n\n\n\u2584\u2584 \u2584\u2584\n\u2588\u2588 \u2588\u2588\n\u2588\u2588 \u2588\u2588  \u2580\u2580\u2588\u2584 \u2588\u2588\u2588\u2584\u2588\u2588\u2588\u2584  \u2580\u2580\u2588\u2584    \u2584\u2588\u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2584 \u2588\u2588\u2588\u2588\u2584\n\u2588\u2588 \u2588\u2588 \u2584\u2588\u2580\u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2584\u2588\u2580\u2588\u2588    \u2588\u2588    \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588\n\u2588\u2588 \u2588\u2588 \u2580\u2588\u2584\u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2580\u2588\u2584\u2588\u2588 \u2588\u2588 \u2580\u2588\u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2580 \u2588\u2588\u2588\u2588\u2580\n                                    \u2588\u2588    \u2588\u2588\n                                    \u2580\u2580    \u2580\u2580\n\nbuild      : b9833-c818263f2\nmodel      : /home/mp/llama.cpp/models/qwen2.5-0.5b-instruct-q4_k_m.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> What is 1542 + 2341? Provide only the number.\n\n4883\n\n[ Prompt: 1657.8 t/s | Generation: 436.6 t/s ]\n\nExiting..."
 }

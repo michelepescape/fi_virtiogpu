@@ -1,0 +1,3 @@
+[   10.863611] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.867443] fault_hook: [FI] Case 2: Corrotto ring_idx (0x0) con 0xFFFFFFFF
+[   10.867446] fault_hook: Execbuffer DOPO: size=24, flags=0x4

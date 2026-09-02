@@ -24,9 +24,4 @@ available commands:
 
 > A ball is in a yellow box. Someone moves the ball to a blue box. Where is the ball now?
 
-The ball is in the yellow box. When someoneError: decode() failed: vk::CommandBuffer::begin: ErrorOutOfHostMemory
-
-
-[ Prompt: 1902.9 t/s | Generation: 491.3 t/s ]
-
-Exiting...
+The

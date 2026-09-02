@@ -1,0 +1,6 @@
+[    9.105173] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[    9.293262] fault_hook: [RECON] cmd_submit | ctx_id=1, data_size=24 byte
+[    9.293266] fault_hook [RAW SUBMIT]: 00000000: be 00 00 00 00 00 00 00 c0 58 d3 62 22 56 00 00  .........X.b"V..
+[    9.293269] fault_hook [RAW SUBMIT]: 00000010: c8 12 00 00 00 00 00 00                          ........
+[    9.293271] fault_hook: [DEBUG] cmd_submit intercettata! data_size=24 byte
+[    9.293273] [FI] Case 2 (RES_ID INVALID): resource_handle 0xbe -> 0xDEAD

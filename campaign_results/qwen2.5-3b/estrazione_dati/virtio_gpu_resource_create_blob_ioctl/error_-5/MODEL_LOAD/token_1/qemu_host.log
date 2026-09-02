@@ -1,0 +1,3 @@
+virgl_render_server[188168]: vkr: mem fd export failed (vk ret -3)
+virtio_gpu_virgl_process_cmd: ctrl 0x10c, error 0x1200
+virtio_gpu_virgl_process_cmd: ctrl 0x208, error 0x1203

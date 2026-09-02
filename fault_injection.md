@@ -65,7 +65,7 @@ if (inject_delay_ms > 0) {
     }
 ```
 
-3. **Errore di Ritorno (`inject_error`):** Sovrascrive il valore restituito dalla funzione (es. per simulare un fail della ioctl).
+2. **Errore di Ritorno (`inject_error`):** Sovrascrive il valore restituito dalla funzione (es. per simulare un fail della ioctl). *Nota: questo fault non viene iniettato su `virtio_gpu_cmd_submit` in quanto è una funzione `void`.*
 
 ```c
 original_retval = regs_return_value(regs);
@@ -75,113 +75,188 @@ if (inject_error != 0) {
     regs_set_return_value(regs, inject_error);
 }
 ```
-5. **Corruzione Parametri della funzione (`descriptor_corruption`):** Eseguita nell'`entry_handler`, manipola le strutture dati prima che vengano elaborate dal kernel. Il modulo gestisce diversi casi a seconda della funzione:
-   
-* *Su virtio_gpu_execbuffer_ioctl:* Modifica la dimensione dei comandi o rimuove i flag di sincronizzazione (`IN_FENCE`) per simulare race conditions.
+3. **Corruzione Parametri della funzione (`descriptor_corruption`):** Eseguita nell'`entry_handler`, manipola le strutture dati prima che vengano elaborate dal kernel. 
+La metodologia adottata è quella di intercettare il payload dati della funzione bersaglio (`void *data`), che viene interpretato in maniera differente da ognuna delle funzioni esaminate, (es. `drm_virtgpu_execbuffer`) e se ne alterano alcuni campi chiave per bypassare i controlli base del kernel e testare eventuali fault.
+
+Di seguito i dettagli delle strutture manipolate e il codice per ciascuna funzione:
+
+* **Su `virtio_gpu_execbuffer_ioctl`**:
+  Questa ioctl riceve da userspace la struttura `drm_virtgpu_execbuffer`. I campi bersagliati sono la dimensione (`size`), l'indice della coda (`ring_idx`) e il puntatore ai comandi (`command`).
 ```c
- // Target1 : virtio_gpu_execbuffer_ioctl
+struct drm_virtgpu_execbuffer {
+    __u32 flags;
+    __u32 size;       // Modificato (Case 1)
+    __u64 command;    // Modificato (Case 3)
+    __u64 bo_handles;
+    __u32 num_bo_handles;
+    __s32 fence_fd;
+    __u32 ring_idx;   // Modificato (Case 2)
+    __u32 syncobj_stride;
+    __u32 num_in_syncobjs;
+    __u32 num_out_syncobjs;
+    __u64 in_syncobjs;
+    __u64 out_syncobjs;
+};
+```
+```c
 switch (descriptor_corruption) {
     case 1:
-    // Caso 1: Dimezza la dimensione del pacchetto comandi (allineato a 4 byte)
-        exbuf->size = ALIGN(exbuf->size * 2, 4);
-        break;
-        
-    case 2:
-        // Caso 2: Azzera la dimensione dei comandi (sottomissione vuota)
+        // Caso 1: Azzera la dimensione dei comandi (sottomissione vuota)
         if (exbuf->size >= 8) {
             exbuf->size = 0;
         }
         break;
-
-    case 3:
-        // Caso 3: Rimuove la sincronizzazione In-Fence, test su race condition
-        exbuf->flags &= ~VIRTGPU_EXECBUF_FENCE_FD_IN;
+    case 2:
+        // Forza un ring_idx fuori scala per far fallire la selezione della coda
+        exbuf->ring_idx = 0xFFFFFFFF;
         break;
-
-    default:
-        // Test sintassi errata: forziamo un flag fuori maschera
-        exbuf->flags |= 0x80000000;
+    case 3:
+        // Corrompe l'indirizzo del buffer comandi
+        exbuf->command = 0xFFFFFFFF;
         break;
 }
-
-pr_info("fault_hook: Execbuffer DOPO: size=%u, flags=0x%x\n",
-        exbuf->size, exbuf->flags);
-
 ```
 
-
-* *Su virtio_gpu_resource_create_blob_ioctl:* Altera i flag `MAPPABLE` o riduce la dimensione allocata del comando (`size`) o del buffer (`cmd_size`)  mantenendo l'allineamento di pagina.
-
+* **Su `virtio_gpu_resource_create_blob_ioctl`**:
+  Riceve la struttura `drm_virtgpu_resource_create_blob`. I campi bersagliati sono le grandezze dell'allocazione (`size`, `cmd_size`) e i flag (`blob_flags`). Si usano allineamenti forzati per superare i check sintattici (es. `IS_ALIGNED`) del kernel allocando però memoira errata.
+```c
+struct drm_virtgpu_resource_create_blob {
+    __u32 blob_mem;
+    __u32 blob_flags; // Modificato (Case 3)
+    __u32 bo_handle;
+    __u32 res_handle;
+    __u64 size;       // Modificato (Case 1)
+    __u32 pad;
+    __u32 cmd_size;   // Modificato (Case 2)
+    __u64 cmd;
+    __u64 blob_id;
+};
+```
 ```c
 switch (descriptor_corruption) {
     case 1:
-        // Caso 1: Riduciamo 'size' ma manteniamo l'allineamento a PAGE_SIZE (4096 byte)
-        // In questo modo passa IS_ALIGNED() in verify_blob() ma alloca meno memoria
+        // Caso 1: Riduciamo 'size' (dimensione comando) ma manteniamo l'allineamento a PAGE_SIZE. Senza allineamento si viene intercettati dal controllo di verify_blob()
         if (blob->size > PAGE_SIZE) {
             blob->size = ALIGN_DOWN(blob->size / 2, PAGE_SIZE);
             if (blob->size == 0) blob->size = PAGE_SIZE; // Evitiamo size 0
         }
         break;
-
     case 2:
-        // Caso 2: Riduciamo 'cmd_size' mantenendo l'allineamento a 4 byte (dword)
-        // In questo modo passa (cmd_size % 4 == 0) in verify_blob()
+        // Caso 2: Riduciamo 'cmd_size' mantenendo l'allineamento a 4 byte
         if (blob->cmd_size >= 8) {
             blob->cmd_size = ALIGN_DOWN(blob->cmd_size / 2, 4);
         }
         break;
-
     case 3:
         // Caso 3: Invertiamo MAPPABLE (0x0001) o CROSS_DEVICE (0x0004)
         // Rimane dentro VIRTGPU_BLOB_FLAG_USE_MASK, quindi supera verify_blob()
         blob->blob_flags ^= 0x0001; 
         break;
-
-    default:
-        // Test di errore sintattico: size non allineata per forzare EINVAL da verify_blob
-        blob->size = 1; 
-        break;
+}
 ```
 
-* *Su virtio_gpu_queue_fenced_ctrl_buffer (Data Poisoning):* Sostituisce bit del payload o parametri del comando con valori spazzatura (es. `0xFF`) o invalida gli Opcode dei comandi VirtIO.}
+* **Su `virtio_gpu_queue_fenced_ctrl_buffer`**:
+  Manipola la struttura interna `virtio_gpu_vbuffer` usata prima dell'inserimento nella virtqueue. I campi colpiti sono il payload dati (`data_buf`), il comando VirtIO (`buf` con casting a `virtio_gpu_ctrl_hdr`), o la dimensione complessiva (`size`).
+```c
+// Struttura principale del buffer
+struct virtio_gpu_vbuffer {
+    char *buf;               // Punta all'intestazione del comando (virtio_gpu_ctrl_hdr)
+    int size;                // Modificato (Case 3)
+    void *data_buf;          // Modificato (Case 1)
+    uint32_t data_size;
+    // ...
+};
 
+// Struttura dell'intestazione VirtIO, contenuta in vbuf->buf (Case 2)
+struct virtio_gpu_ctrl_hdr {
+    __le32 type;             // Modificato (Case 2: Opcode del comando)
+    __le32 flags;
+    __le64 fence_id;
+    __le32 ctx_id;
+    __le32 ring_idx;
+};
+```
 ```c
 switch (descriptor_corruption) {
     case 1:
-        // Corruzione del Payload
-        // Simula un bit-flip nella RAM o sul bus dati.
+        // Bit-flip nel payload DMA
+        // Simula un singolo bit-flip nella RAM o sul bus dati.
         if (vbuf->data_buf && vbuf->data_size > 0) {
-            memset(vbuf->data_buf, 0xFF, min_t(size_t, 64, vbuf->data_size));
-            pr_info("[FI] Case 1: Corrupted DMA Payload (data_buf)\n");
-        } else if (vbuf->buf && vbuf->size > 8) {
-            // Se non c'e' payload, corrompiamo i parametri del comando (lasciando intatto l'Opcode)
-            memset((char *)vbuf->buf + 8, 0xAA, vbuf->size - 8);
-            pr_info("[FI] Case 1: Corrupted Command Arguments (buf)\n");
+            uint32_t flip_off = vbuf->data_size / 2;
+            ((unsigned char *)vbuf->data_buf)[flip_off] ^= 0x01;
         }
         break;
-
     case 2:
-        // INVALID OPCODE 
-        // Simula un errore nel controller VirtIO o un bug software.
-        if (vbuf->buf && vbuf->size >= sizeof(u32)) {
-            u32 *cmd_type = (u32 *)vbuf->buf;
-            pr_info("[FI] Case 2: Replaced Opcode %u with INVALID (0xFFFF)\n", *cmd_type);
-            *cmd_type = 0xFFFF;
+        // INVALID OPCODE — Corruzione del tipo di comando
+        // Sostituisce l'intestazione virtio_gpu_ctrl_hdr->type con un valore errato
+        if (vbuf->buf && vbuf->size >= sizeof(struct virtio_gpu_ctrl_hdr)) {
+            struct virtio_gpu_ctrl_hdr *hdr = (struct virtio_gpu_ctrl_hdr *)vbuf->buf;
+            hdr->type = cpu_to_le32(0xFFFF);
         }
         break;
-
     case 3:
-        // Errore di Dimensione/Bus
-        // Simula una perdita di pacchetti o un difetto del DMA.
-        if (vbuf->size > 4) {
-            pr_info("[FI] Case 3: Truncated size from %d to 4 bytes\n", vbuf->size);
-            vbuf->size = 4;
+        // SIZE TRUNCATION — Troncamento del comando all'header
+        // Simula un DMA underrun o perdita dati sul bus.
+        if (vbuf->size > (int)sizeof(struct virtio_gpu_ctrl_hdr)) {
+            vbuf->size = sizeof(struct virtio_gpu_ctrl_hdr);
         }
         break;
 }
 ```
 
+* **Su `virtio_gpu_cmd_submit`**:
+  Il campo `data` in questa funzione non viene interpretato come una struct come negli altri casi. Di conseguenza, si analizza il buffer che nelle varie run si è osservato essere composto da 24 byte. Tramite stampe durante l'esecuzione, si deduce che i byte 0-3 sono il `resource_handle` e i byte 16-23 sono il `tail_off` del Ring Buffer condiviso di Vulkan.
+```c
+/*
+ * Mappa dedotta del buffer (24 byte):
+ * [0-3]   le32 resource_handle  (Modificato nel Case 2)
+ * [4-7]   le32 padding
+ * [8-15]  le64 base_address
+ * [16-23] le64 tail_offset      (Modificati base_address+tail_offset nei Case 1 e 3)
+ */
+```
+```c
+switch (descriptor_corruption) {
+    case 1: {
+        // OBIETTIVO: Bit-flip nel ring buffer condiviso.
+        // Tentiamo di invertire 1 bit negli ultimi byte appena accodati prima del tail
+        // per osservare un potenziale SDC (spesso però viene mascherato o porta a crash).
+        uint64_t base_addr = *(uint64_t *)(payload + 8);
+        uint64_t tail_off = *(uint64_t *)(payload + 16);
 
+        if (base_addr && tail_off >= 16) {
+            void __user *target_user_addr = (void __user *)(base_addr + tail_off - 8);
+            unsigned char byte_val;
+            if (copy_from_user_nofault(&byte_val, target_user_addr, 1) == 0) {
+                unsigned char corrupted = byte_val ^ 0x01;
+                copy_to_user_nofault(target_user_addr, &corrupted, 1);
+            }
+        }
+        break;
+    }
+    case 2: {
+        // OBIETTIVO: Invalidazione dell'identificativo del ring buffer.
+        // L'hypervisor non trova il ring e ignora la sottomissione, impedendo il 
+        // completamento della fence
+        uint32_t *res_handle = (uint32_t *)payload;
+        *res_handle = cpu_to_le32(0xDEAD);
+        break;
+    }
+    case 3: {
+        // OBIETTIVO: Azzeramento parziale dei comandi nel ring buffer.
+        // Forziamo a zero gli ultimi 16 byte accodati nel ring.
+        uint64_t base_addr = *(uint64_t *)(payload + 8);
+        uint64_t tail_off = *(uint64_t *)(payload + 16);
+
+        if (base_addr && tail_off >= 16) {
+            void __user *target_user_addr = (void __user *)(base_addr + tail_off - 16);
+            unsigned char zeros[16] = {0};
+            copy_to_user_nofault(target_user_addr, zeros, sizeof(zeros));
+        }
+        break;
+    }
+}
+```
 
 ## Instrumentazione `llama.cpp`
 

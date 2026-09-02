@@ -1,9 +1,7 @@
 import os
 import json
 import time
-import socket
 import subprocess
-import time
 import re
 from pathlib import Path
 
@@ -11,7 +9,6 @@ from pathlib import Path
 SSH_HOST = "localhost"
 SSH_PORT = "2222"
 SSH_USER = "mp"
-QEMU_MONITOR_SOCK = "/tmp/qemu-monitor.sock"
 RESULTS_DIR = Path("campaign_results")
 
 # Timeout massimo di esecuzione per singola run (in secondi)
@@ -21,15 +18,15 @@ QEMU_CMD = [
     "qemu-system-x86_64", "-enable-kvm", "-m", "12G", "-smp", "4", "-cpu", "host",
     "-machine", "q35",
     "-drive", "file=ubuntu-test.qcow2,if=virtio,format=qcow2",
-    "-snapshot", # 
+    "-snapshot",
     "-netdev", "user,id=net0,hostfwd=tcp::2222-:22",
     "-device", "virtio-net-pci,netdev=net0",
     "-device", "virtio-gpu-gl,venus=on,blob=on,hostmem=8G",
-    #"-display", "gtk,gl=on,show-cursor=on",
     "-display", "egl-headless,gl=on",
     "-kernel", "/home/mp/Downloads/linux-7.1.2/linux/arch/x86/boot/bzImage",
     "-initrd", "./initrd_guest.img",
-    "-append", "root=/dev/mapper/ubuntu--vg-ubuntu--lv console=tty0"
+    "-append", "root=/dev/mapper/ubuntu--vg-ubuntu--lv console=tty0 console=ttyS0",
+    "-serial", "file:guest_kernel.log"
 ]
 
 # ================= CONFIGURAZIONE ESPERIMENTI =================
@@ -40,14 +37,15 @@ LLAMA_CMD_BASE = (
 
 MODELS = {
     "qwen2.5-0.5b": "/home/mp/llama.cpp/models/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "qwen2.5-1.5b": "/home/mp/llama.cpp/models/qwen2.5-1.5b-instruct-q4_k_m.gguf",
     "qwen2.5-3b": "/home/mp/llama.cpp/models/qwen2.5-3b-instruct-q4_k_m.gguf",
-    # ...
 }
 
 PROMPTS = {
     "ragionamento": "A ball is in a yellow box. Someone moves the ball to a blue box. Where is the ball now?",
     "aritmetica": "What is 1542 + 2341? Provide only the number.",
     "scelta_multipla": "Question: Which planet is known as the Red Planet? A) Earth B) Mars C) Jupiter. Answer:",
+    "estrazione_dati": "Extract the names of the cities from this text as a JSON list: 'I visited Paris, then took a train to Berlin, and ended up in Rome.' JSON:",
     #"linguistica_it": "Traduci la seguente frase in italiano: 'The system has encountered a critical hardware failure and must be restarted immediately.'"
 }
 
@@ -61,8 +59,8 @@ BASELINE_DATA = {} # useremo i campi
 TARGET_FUNCTIONS = [
     "virtio_gpu_execbuffer_ioctl",
     "virtio_gpu_resource_create_blob_ioctl",
-    "virtio_gpu_queue_fenced_ctrl_buffer"
-    #...
+    "virtio_gpu_queue_fenced_ctrl_buffer",
+    "virtio_gpu_cmd_submit",
 ]
 
 ALL_FAULTS = [
@@ -75,6 +73,14 @@ ALL_FAULTS = [
     {"type": "corruption", "val": 3},
 ]
 
+# Configurazione guasti per funzione: escludiamo "error" da virtio_gpu_cmd_submit (funzione void)
+FAULTS_PER_FUNCTION = {
+    "virtio_gpu_execbuffer_ioctl": ALL_FAULTS,
+    "virtio_gpu_resource_create_blob_ioctl": ALL_FAULTS,
+    "virtio_gpu_queue_fenced_ctrl_buffer": ALL_FAULTS,
+    "virtio_gpu_cmd_submit": [f for f in ALL_FAULTS if f["type"] != "error"],
+}
+
 PHASES = ["MODEL_LOAD", "PREFILL", "DECODE"]
 
 # ================= FUNZIONI DI SUPPORTO =================
@@ -82,8 +88,10 @@ PHASES = ["MODEL_LOAD", "PREFILL", "DECODE"]
 def start_vm():
     """Avvia la VM e aspetta che il server SSH sia pronto."""
     print("    [*] Avvio VM...")
-    # Avvia QEMU in background
-    qemu_proc = subprocess.Popen(QEMU_CMD, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # Avvia QEMU in background e ridireziona i log su file
+    global qemu_log_file
+    qemu_log_file = open("qemu_host.log", "w")
+    qemu_proc = subprocess.Popen(QEMU_CMD, stdout=qemu_log_file, stderr=subprocess.STDOUT)
     
     # Polling per aspettare che SSH risponda (la VM ha finito il boot)
     max_retries = 30
@@ -102,16 +110,9 @@ def stop_vm(qemu_proc):
     if qemu_proc:
         qemu_proc.terminate()
         qemu_proc.wait() # Aspetta che si chiuda davvero
-
-def send_qemu_cmd(cmd):
-    try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(QEMU_MONITOR_SOCK)
-        sock.sendall((cmd + "\n").encode())
-        time.sleep(1.5)
-        sock.close()
-    except Exception as e:
-        print(f"[!] Errore connessione QEMU Monitor: {e}")
+    global qemu_log_file
+    if 'qemu_log_file' in globals() and not qemu_log_file.closed:
+        qemu_log_file.close()
 
 def run_ssh_cmd(cmd, timeout=EXEC_TIMEOUT):
     ssh_cmd = [
@@ -137,16 +138,34 @@ def extract_decode_tokens(stderr_text):
                 return int(match.group(1))
     return 3 # Fallback minimo
 
+def clean_llama_output(stdout_text, prompt_text):
+    """Estrae solo la risposta generata da llama-cli, rimuovendo timing e banner."""
+    # Rimuove le info finali sui timing
+    stdout_text = re.sub(r'\[ Prompt:.*?Exiting\.\.\.', '', stdout_text, flags=re.DOTALL)
+    
+    # Rimuove tutto fino all'ultimo pezzo del prompt
+    prompt_snippet = prompt_text[-20:]
+    if prompt_snippet in stdout_text:
+        parts = stdout_text.split(prompt_snippet)
+        return parts[-1].strip()
+    return stdout_text.strip()
+
 def save_run(out_dir, stdout, stderr, run_meta):
     os.makedirs(out_dir, exist_ok=True)
     with open(out_dir / "stdout.txt", "w") as f: f.write(stdout)
     with open(out_dir / "stderr.txt", "w") as f: f.write(stderr)
     with open(out_dir / "meta.json", "w") as f: json.dump(run_meta, f, indent=4)
     
-    if run_meta["status"] != "HANG":
-        rc, dmesg_out, _ = run_ssh_cmd("sudo dmesg | tail -n 100", timeout=5)
+    import shutil
+    if os.path.exists("guest_kernel.log"):
+        shutil.copy("guest_kernel.log", out_dir / "guest_kernel.log")
+    if os.path.exists("qemu_host.log"):
+        shutil.copy("qemu_host.log", out_dir / "qemu_host.log")
+    
+    if run_meta.get("status") != "HANG":
+        rc, dmesg_out, _ = run_ssh_cmd("sudo dmesg | grep -E 'fault_hook|\\[FI\\]|drm.*virtio'", timeout=5)
         with open(out_dir / "dmesg.txt", "w") as f: 
-            f.write(dmesg_out if rc == 0 else "[Errore recupero dmesg]")
+            f.write(dmesg_out if rc == 0 else "[Nessun log kernel registrato o errore]")
     else:
         with open(out_dir / "dmesg.txt", "w") as f:
             f.write("[VM IN HANG - dmesg irraggiungibile via SSH]\n")
@@ -206,9 +225,15 @@ def main():
             
             try:
                 # Reset fault injector, assicuriamoci che il modulo non sia attivato
-                run_ssh_cmd("sudo rmmod fault_injection")            
+                run_ssh_cmd("sudo rmmod fault_injection 2>/dev/null || true")
+                
+                # Pulizia buffer dmesg per non avere log sporchi
+                run_ssh_cmd("sudo dmesg -c > /dev/null")
 
                 full_cmd = f"{LLAMA_CMD_BASE} -lv 3 -m {model_path} -p \"{prompt_text}\"" # con -lv 3 stampo il livello info di verbosità
+                # rc = return code
+                # bout = Baseline OUTput (testo generato stdout)
+                # berr = Baseline ERRor (log e timing stderr)
                 rc, bout, berr = run_ssh_cmd(full_cmd, timeout=60)
                 
                 if rc != 0:
@@ -225,8 +250,14 @@ def main():
                     "expected": bout.strip()
                 }
                 
-                #baseline_dir = RESULTS_DIR / model_name / prompt_name / "baseline"
-                save_run(baseline_dir, bout, berr, {"status": "SUCCESS", "tokens": tokens, "is_baseline": True})
+                save_run(baseline_dir, bout, berr, {
+                    "status": "SUCCESS",
+                    "tokens": tokens,
+                    "is_baseline": True,
+                    "model": model_name,
+                    "prompt": prompt_name,
+                    "expected": bout.strip()
+                })
                 
                 print(f"    [+] Fatto! Token Decode: {tokens}")
             finally:
@@ -249,8 +280,9 @@ def main():
             decode_targets = BASELINE_DATA[model_name][prompt_name]["decode_targets"]
             
             # (2 fasi fisse con 1 token) + (token variabili per il DECODE)
-            num_tokens_per_fault = 2 + len(decode_targets) 
-            total_experiments += len(TARGET_FUNCTIONS) * len(ALL_FAULTS) * num_tokens_per_fault
+            num_tokens_per_fault = 2 + len(decode_targets)
+            for func in TARGET_FUNCTIONS:
+                total_experiments += len(FAULTS_PER_FUNCTION[func]) * num_tokens_per_fault
 
     print(f"[*] Totale esperimenti calcolati: {total_experiments}\n")
     current_experiment = 0
@@ -263,11 +295,12 @@ def main():
             if prompt_name not in BASELINE_DATA[model_name]: continue
             
             decode_targets = BASELINE_DATA[model_name][prompt_name]["decode_targets"]
+            baseline_expected = BASELINE_DATA[model_name][prompt_name]["expected"]
 
             for func in TARGET_FUNCTIONS:
                 
-                # applichiamo tutti i fault a tutte le funzioni
-                for f_conf in ALL_FAULTS:
+                # Applichiamo i soli guasti validi per la funzione target corrente
+                for f_conf in FAULTS_PER_FUNCTION[func]:
                     config_folder_name = f"{f_conf['type']}_{f_conf['val']}"
 
                     for phase in PHASES:
@@ -285,11 +318,6 @@ def main():
 
                             print(f"[{current_experiment}/{total_experiments}] FI: {model_name[:8]}|{prompt_name[:8]} -> {func} | {config_folder_name} | {phase} | Token {token}")
 
-                            #send_qemu_cmd("loadvm baseline_clean")
-                            #time.sleep(2)
-                            #send_qemu_cmd("c") # Forza la ripresa
-                            #time.sleep(1)
-
                             qemu_process = start_vm()
                             if not qemu_process:
                                 print("    [!] Impossibile avviare VM per FI. Salto run.")
@@ -298,13 +326,12 @@ def main():
                             try: 
                                 # insmod pulito e chmod
                                 setup_cmd = (
-                                # f"sudo rmmod fault_injection ; " # Rimuove se presente (fail silenzioso se non c'è)
-                                #  f"sudo insmod /home/mp/fault_injection.ko func_name={func} target_comm=llama-cli && "
-                                # f"sudo chmod 666 /sys/module/fault_injection/parameters/*"
-                                "sudo rmmod fault_injection 2>/dev/null || true ; "
+                                    "sudo rmmod fault_injection 2>/dev/null || true ; "
                                     f"sudo insmod /home/mp/fault_injection.ko func_name={func} target_comm=llama-cli ; "
                                     "sleep 0.2 ; "
-                                    "sudo chmod 666 /sys/module/fault_injection/parameters/*"
+                                    "sudo chown -R mp:mp /sys/module/fault_injection/parameters/ ; "
+                                    "sudo chmod 666 /sys/module/fault_injection/parameters/* ; "
+                                    "sudo dmesg -c > /dev/null"
                                 )
                                 rc_setup, _, err_setup = run_ssh_cmd(setup_cmd, timeout=10)
                                 if rc_setup != 0:
@@ -327,17 +354,39 @@ def main():
                                 )
                                 
                                 full_cmd = f"{env_vars} {LLAMA_CMD_BASE} -m {model_path} -p \"{prompt_text}\""
+                                # rc = return code
+                                # tout = Test OUTput (stdout generato sotto guasto)
+                                # terr = Test ERRor (stderr sotto guasto)
                                 rc, tout, terr = run_ssh_cmd(full_cmd, timeout=45)
                                 
-                                if rc == 124: status = "HANG"
-                                elif rc != 0: status = f"CRASH (Codice {rc})"
-                                else: status = "SUCCESS"
+                                if rc == 124:
+                                    status = "HANG"
+                                elif rc != 0:
+                                    status = f"CRASH (Codice {rc})"
+                                else:
+                                    # Llama-cli esce con codice 0 anche in caso di errori gestiti internamente (es. Vulkan OOM)
+                                    if "Error:" in tout or "failed:" in tout or "Error:" in terr or "failed:" in terr:
+                                        status = "APP_ERROR"
+                                    else:
+                                        status = "SUCCESS"
                                 
+                                # Use cleaned outputs purely for the match validation
+                                clean_tout = clean_llama_output(tout, prompt_text)
+                                clean_base = clean_llama_output(baseline_expected, prompt_text)
+                                is_match = (clean_tout == clean_base) if status == "SUCCESS" else False
 
                                 meta = {
-                                    "status": status, "exit_code": rc, "phase": phase,
-                                    "token": token, "fault_type": f_conf["type"],
-                                    "fault_val": f_conf["val"], "target_function": func
+                                    "status": status,
+                                    "exit_code": rc,
+                                    "phase": phase,
+                                    "token": token,
+                                    "fault_type": f_conf["type"],
+                                    "fault_val": f_conf["val"],
+                                    "target_function": func,
+                                    "model": model_name,
+                                    "prompt": prompt_name,
+                                    "output_match": is_match,
+                                    "baseline_output": baseline_expected,
                                 }
                                 save_run(run_dir, tout, terr, meta)
                             finally:

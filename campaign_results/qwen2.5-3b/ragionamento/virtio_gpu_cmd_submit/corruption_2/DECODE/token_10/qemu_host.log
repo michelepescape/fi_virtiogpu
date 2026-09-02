@@ -1,0 +1,5 @@
+virgl_render_server[162556]: vkr: unknown resulted in CS error
+virgl_render_server[162556]: vkr: submit_cmd: vn_dispatch_command failed
+virgl_render_server[162556]: failed to dispatch context op 5
+virgl_render_server[162556]: vkr: destroying context 1 (ggml-vulkan) with a valid instance
+virgl_render_server[162556]: vkr: destroying device with valid objects

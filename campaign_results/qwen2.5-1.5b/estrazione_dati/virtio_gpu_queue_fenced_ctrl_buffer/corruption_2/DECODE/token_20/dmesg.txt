@@ -1,0 +1,8 @@
+[   10.497130] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.499460] fault_hook: FencedCtrl PRIMA: size=32, data_size=24
+[   10.499463] fault_hook: [RECON HDR] type=0x207, flags=0x0, fence_id=0, ctx_id=1
+[   10.499466] fault_hook [RAW CMD_BUF]: 00000000: 07 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[   10.499469] fault_hook: [RECON DATA] Payload DMA presente! Dimensione: 24 byte
+[   10.499471] fault_hook [RAW DATA_BUF]: 00000000: be 00 00 00 00 00 00 00 c0 88 f4 19 8d 55 00 00  .............U..
+[   10.499472] [FI] Case 2 (OPCODE): type 0x207 -> 0xFFFF
+[   10.499565] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1200 (command 0xffff)

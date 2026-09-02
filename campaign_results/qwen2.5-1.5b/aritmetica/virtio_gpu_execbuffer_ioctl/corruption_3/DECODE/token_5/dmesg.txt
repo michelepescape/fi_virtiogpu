@@ -1,0 +1,3 @@
+[   10.288809] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.291023] fault_hook: [FI] Case 2: Puntatore command alterato da 0x7f911f256df0 a 0xFFFFFFFF
+[   10.291026] fault_hook: Execbuffer DOPO: size=24, flags=0x4

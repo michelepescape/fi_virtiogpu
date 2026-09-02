@@ -1,0 +1,5 @@
+virgl_render_server[92208]: vkr: vkNotifyRingMESA resulted in CS error
+virgl_render_server[92208]: vkr: submit_cmd: vn_dispatch_command failed
+virgl_render_server[92208]: failed to dispatch context op 5
+virgl_render_server[92208]: vkr: destroying context 1 (ggml-vulkan) with a valid instance
+virgl_render_server[92208]: vkr: destroying device with valid objects

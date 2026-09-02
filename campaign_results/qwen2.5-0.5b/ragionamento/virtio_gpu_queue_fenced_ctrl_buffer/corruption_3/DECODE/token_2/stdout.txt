@@ -24,4 +24,4 @@ available commands:
 
 > A ball is in a yellow box. Someone moves the ball to a blue box. Where is the ball now?
 
-The ball is in the yellow box. When someone
+The

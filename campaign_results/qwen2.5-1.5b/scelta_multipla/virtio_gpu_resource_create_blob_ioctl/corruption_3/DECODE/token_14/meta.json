@@ -1,0 +1,13 @@
+{
+    "status": "SUCCESS",
+    "exit_code": 0,
+    "phase": "DECODE",
+    "token": 14,
+    "fault_type": "corruption",
+    "fault_val": 3,
+    "target_function": "virtio_gpu_resource_create_blob_ioctl",
+    "model": "qwen2.5-1.5b",
+    "prompt": "scelta_multipla",
+    "output_match": true,
+    "baseline_output": "Loading model... \n\n\n\u2584\u2584 \u2584\u2584\n\u2588\u2588 \u2588\u2588\n\u2588\u2588 \u2588\u2588  \u2580\u2580\u2588\u2584 \u2588\u2588\u2588\u2584\u2588\u2588\u2588\u2584  \u2580\u2580\u2588\u2584    \u2584\u2588\u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2584 \u2588\u2588\u2588\u2588\u2584\n\u2588\u2588 \u2588\u2588 \u2584\u2588\u2580\u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2584\u2588\u2580\u2588\u2588    \u2588\u2588    \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588\n\u2588\u2588 \u2588\u2588 \u2580\u2588\u2584\u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2580\u2588\u2584\u2588\u2588 \u2588\u2588 \u2580\u2588\u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2580 \u2588\u2588\u2588\u2588\u2580\n                                    \u2588\u2588    \u2588\u2588\n                                    \u2580\u2580    \u2580\u2580\n\nbuild      : b9833-c818263f2\nmodel      : /home/mp/llama.cpp/models/qwen2.5-1.5b-instruct-q4_k_m.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> Question: Which planet is known as the Red Planet? A) Earth B) Mars C) Jupiter. Answer:\n\nThe Red Planet is Mars. It is known for its reddish appearance due to the presence of iron oxide, also known as rust.\n\n[ Prompt: 1256.4 t/s | Generation: 318.7 t/s ]\n\nExiting..."
+}

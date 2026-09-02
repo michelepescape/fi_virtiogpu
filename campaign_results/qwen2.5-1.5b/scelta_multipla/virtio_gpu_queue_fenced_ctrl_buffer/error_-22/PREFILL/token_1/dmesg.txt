@@ -1,0 +1,2 @@
+[   10.408723] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=-22, delay=0ms)
+[   10.409936] fault_hook: [FAULT #1] Sovrascrittura virtio_gpu_queue_fenced_ctrl_buffer: da 0 a -22

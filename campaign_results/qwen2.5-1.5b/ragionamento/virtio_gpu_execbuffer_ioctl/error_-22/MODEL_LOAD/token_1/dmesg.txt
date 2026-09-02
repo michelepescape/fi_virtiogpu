@@ -1,0 +1,2 @@
+[    9.105937] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=-22, delay=0ms)
+[    9.297581] fault_hook: [FAULT #1] Sovrascrittura virtio_gpu_execbuffer_ioctl: da 0 a -22

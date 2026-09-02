@@ -26,6 +26,6 @@ available commands:
 
 The ball is now in the blue box.
 
-[ Prompt: 927.2 t/s | Generation: 203.1 t/s ]
+[ Prompt: 895.9 t/s | Generation: 199.7 t/s ]
 
 Exiting...

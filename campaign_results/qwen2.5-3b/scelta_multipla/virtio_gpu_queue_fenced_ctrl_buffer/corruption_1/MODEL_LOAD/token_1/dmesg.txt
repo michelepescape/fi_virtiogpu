@@ -1,0 +1,7 @@
+[    9.111601] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[    9.301722] fault_hook: FencedCtrl PRIMA: size=32, data_size=24
+[    9.301726] fault_hook: [RECON HDR] type=0x207, flags=0x0, fence_id=0, ctx_id=1
+[    9.301729] fault_hook [RAW CMD_BUF]: 00000000: 07 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[    9.301731] fault_hook: [RECON DATA] Payload DMA presente! Dimensione: 24 byte
+[    9.301733] fault_hook [RAW DATA_BUF]: 00000000: be 00 00 00 00 00 00 00 c0 f8 1d db f9 55 00 00  .............U..
+[    9.301735] [FI] Case 1 (SDC): Bit-flip in data_buf[12]: 0xf9 -> 0xf8

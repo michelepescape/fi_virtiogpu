@@ -1,0 +1,3 @@
+[   10.554537] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.556211] fault_hook: CreateBlob prima: size=110592
+[   10.556215] fault_hook: CreateBlob DOPO: size=110592

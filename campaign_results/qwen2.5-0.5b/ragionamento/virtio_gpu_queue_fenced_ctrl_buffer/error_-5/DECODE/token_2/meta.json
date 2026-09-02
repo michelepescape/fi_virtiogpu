@@ -5,5 +5,9 @@
     "token": 2,
     "fault_type": "error",
     "fault_val": -5,
-    "target_function": "virtio_gpu_queue_fenced_ctrl_buffer"
+    "target_function": "virtio_gpu_queue_fenced_ctrl_buffer",
+    "model": "qwen2.5-0.5b",
+    "prompt": "ragionamento",
+    "output_match": true,
+    "baseline_output": "Loading model... \n\n\n\u2584\u2584 \u2584\u2584\n\u2588\u2588 \u2588\u2588\n\u2588\u2588 \u2588\u2588  \u2580\u2580\u2588\u2584 \u2588\u2588\u2588\u2584\u2588\u2588\u2588\u2584  \u2580\u2580\u2588\u2584    \u2584\u2588\u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2584 \u2588\u2588\u2588\u2588\u2584\n\u2588\u2588 \u2588\u2588 \u2584\u2588\u2580\u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2584\u2588\u2580\u2588\u2588    \u2588\u2588    \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588\n\u2588\u2588 \u2588\u2588 \u2580\u2588\u2584\u2588\u2588 \u2588\u2588 \u2588\u2588 \u2588\u2588 \u2580\u2588\u2584\u2588\u2588 \u2588\u2588 \u2580\u2588\u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2580 \u2588\u2588\u2588\u2588\u2580\n                                    \u2588\u2588    \u2588\u2588\n                                    \u2580\u2580    \u2580\u2580\n\nbuild      : b9833-c818263f2\nmodel      : /home/mp/llama.cpp/models/qwen2.5-0.5b-instruct-q4_k_m.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> A ball is in a yellow box. Someone moves the ball to a blue box. Where is the ball now?\n\nThe ball is in the yellow box. When someone moves the ball to the blue box, the ball is no longer in the yellow box but in the blue box.\n\n[ Prompt: 1859.1 t/s | Generation: 441.5 t/s ]\n\nExiting..."
 }

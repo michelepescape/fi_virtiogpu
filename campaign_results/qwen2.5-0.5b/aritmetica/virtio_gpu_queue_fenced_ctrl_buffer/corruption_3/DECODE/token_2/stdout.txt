@@ -24,8 +24,4 @@ available commands:
 
 > What is 1542 + 2341? Provide only the number.
 
-4883
-
-[ Prompt: 1760.8 t/s | Generation: 482.1 t/s ]
-
-Exiting...
+4

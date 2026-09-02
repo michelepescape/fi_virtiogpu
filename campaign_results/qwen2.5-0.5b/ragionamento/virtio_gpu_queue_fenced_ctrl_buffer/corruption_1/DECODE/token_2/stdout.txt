@@ -24,4 +24,8 @@ available commands:
 
 > A ball is in a yellow box. Someone moves the ball to a blue box. Where is the ball now?
 
-The
+The ball is in the yellow box. When someone moves the ball to the blue box, the ball is no longer in the yellow box but in the blue box.
+
+[ Prompt: 1872.4 t/s | Generation: 478.8 t/s ]
+
+Exiting...

@@ -1,0 +1,5 @@
+[   10.168445] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.171066] fault_hook: CreateBlob prima: size=8388608
+[   10.171069] fault_hook: CreateBlob DOPO: size=8388608
+[   10.171238] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1200 (command 0x10c)
+[   10.174951] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1203 (command 0x102)

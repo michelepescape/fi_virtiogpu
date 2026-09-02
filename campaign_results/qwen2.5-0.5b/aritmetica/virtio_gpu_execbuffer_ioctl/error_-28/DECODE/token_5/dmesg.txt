@@ -1,0 +1,1 @@
+[   10.134991] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=-28, delay=0ms)

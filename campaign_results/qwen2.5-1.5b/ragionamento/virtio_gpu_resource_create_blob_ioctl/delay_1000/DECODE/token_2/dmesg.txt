@@ -1,0 +1,2 @@
+[   10.332854] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=1000ms)
+[   10.351586] fault_hook: [LATENZA #1] 1000 ms su virtio_gpu_resource_create_blob_ioctl

@@ -1,0 +1,11 @@
+[FI] config: phase= token=0.00.168.067 I -1 fault_code=0 delay_ms=0 burst=1 occ=1 corruption=0
+srv    load_model: loading model '/home/mp/llama.cpp/models/qwen2.5-3b-instruct-q4_k_m.gguf'
+0.00.684.664 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.917.253 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 2048, kv_unified = 'false'
+0.01.924.616 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.01.924.637 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.02.146.830 I slot print_timing: id  0 | task 0 | prompt eval time =      58.88 ms /    63 tokens (    0.93 ms per token,  1070.05 tokens per second)
+0.02.146.835 I slot print_timing: id  0 | task 0 |        eval time =     163.28 ms /    31 tokens (    5.27 ms per token,   189.86 tokens per second)
+0.02.146.836 I slot print_timing: id  0 | task 0 |       total time =     222.16 ms /    94 tokens
+0.02.146.839 I slot print_timing: id  0 | task 0 |    graphs reused =         30
+0.02.146.855 I slot      release: id  0 | task 0 | stop processing: n_tokens = 93, truncated = 0

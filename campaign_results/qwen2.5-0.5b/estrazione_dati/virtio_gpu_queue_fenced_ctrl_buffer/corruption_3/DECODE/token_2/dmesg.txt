@@ -1,0 +1,9 @@
+[    9.985022] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.006582] fault_hook: FencedCtrl PRIMA: size=56, data_size=0
+[   10.006585] fault_hook: [RECON HDR] type=0x10c, flags=0x0, fence_id=0, ctx_id=1
+[   10.006588] fault_hook [RAW CMD_BUF]: 00000000: 0c 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[   10.006590] fault_hook: [RECON DATA] Nessun payload DMA separato (data_buf nullo o data_size=0)
+[   10.006592] [FI] Case 3 (TRUNC): size 56 -> 24 (header-only)
+[   10.006688] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1203 (command 0x208)
+[   10.010194] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1203 (command 0x209)
+[   10.013468] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1203 (command 0x102)

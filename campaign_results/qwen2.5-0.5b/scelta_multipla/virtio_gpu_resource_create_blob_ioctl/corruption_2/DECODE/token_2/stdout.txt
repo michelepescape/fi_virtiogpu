@@ -26,6 +26,6 @@ available commands:
 
 B) Mars.
 
-[ Prompt: 2498.8 t/s | Generation: 477.2 t/s ]
+[ Prompt: 1692.0 t/s | Generation: 484.1 t/s ]
 
 Exiting...

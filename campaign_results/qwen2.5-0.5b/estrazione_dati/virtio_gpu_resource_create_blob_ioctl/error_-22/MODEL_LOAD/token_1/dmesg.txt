@@ -1,0 +1,6 @@
+[    9.089600] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=-22, delay=0ms)
+[    9.384846] fault_hook: [FAULT #1] Sovrascrittura virtio_gpu_resource_create_blob_ioctl: da 0 a -22
+[    9.385534] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1200 (command 0x10c)
+[    9.388589] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1203 (command 0x208)
+[   10.785889] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1203 (command 0x209)
+[   10.791096] [drm:virtio_gpu_dequeue_ctrl_func] *ERROR* response 0x1203 (command 0x102)

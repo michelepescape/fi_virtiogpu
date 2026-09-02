@@ -26,6 +26,6 @@ available commands:
 
 The planet known as the Red Planet is B) Mars.
 
-[ Prompt: 927.6 t/s | Generation: 200.6 t/s ]
+[ Prompt: 919.3 t/s | Generation: 200.1 t/s ]
 
 Exiting...

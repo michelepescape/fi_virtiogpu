@@ -1,0 +1,2 @@
+virgl_render_server[182379]: vkr: vkFreeMemory resulted in CS error
+virgl_render_server[182379]: vkr: ring_submit_cmd: vn_dispatch_command failed

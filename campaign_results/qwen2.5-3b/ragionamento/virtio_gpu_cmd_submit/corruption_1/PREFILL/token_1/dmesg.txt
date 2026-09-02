@@ -1,0 +1,6 @@
+[   10.798599] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.800123] fault_hook: [RECON] cmd_submit | ctx_id=1, data_size=24 byte
+[   10.800127] fault_hook [RAW SUBMIT]: 00000000: be 00 00 00 00 00 00 00 c0 58 3e 8f ed 55 00 00  .........X>..U..
+[   10.800129] fault_hook [RAW SUBMIT]: 00000010: 80 d1 09 00 00 00 00 00                          ........
+[   10.800131] fault_hook: [DEBUG] cmd_submit intercettata! data_size=24 byte
+[   10.800133] [FI] Case 1 (SDC USER RING): Bit-flip at [0x55ed8f482a38]: 0x00 -> 0x01

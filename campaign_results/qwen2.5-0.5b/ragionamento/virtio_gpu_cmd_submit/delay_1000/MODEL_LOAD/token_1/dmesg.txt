@@ -1,0 +1,5 @@
+[    9.048680] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=1000ms)
+[    9.237940] fault_hook: [RECON] cmd_submit | ctx_id=1, data_size=24 byte
+[    9.237945] fault_hook [RAW SUBMIT]: 00000000: be 00 00 00 00 00 00 00 c0 a8 72 9c 63 55 00 00  ..........r.cU..
+[    9.237948] fault_hook [RAW SUBMIT]: 00000010: c8 12 00 00 00 00 00 00                          ........
+[    9.237952] fault_hook: [LATENZA #1] 1000 ms su virtio_gpu_cmd_submit

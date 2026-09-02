@@ -1,0 +1,2 @@
+[   10.825741] fault_hook: TRIGGER ATTIVO! Attendo 1 chiamate, colpiro' per 1 volte consecutive. (err=0, delay=0ms)
+[   10.829577] fault_hook: Execbuffer DOPO: size=0, flags=0x4

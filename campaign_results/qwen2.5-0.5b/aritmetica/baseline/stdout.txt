@@ -26,6 +26,6 @@ available commands:
 
 4883
 
-[ Prompt: 1737.4 t/s | Generation: 498.5 t/s ]
+[ Prompt: 1657.8 t/s | Generation: 436.6 t/s ]
 
 Exiting...

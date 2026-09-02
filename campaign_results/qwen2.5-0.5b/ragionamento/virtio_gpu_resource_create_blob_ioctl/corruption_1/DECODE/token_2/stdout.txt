@@ -27,6 +27,6 @@ available commands:
 The ball is in the yellow box. When someoneError: decode() failed: vk::CommandBuffer::begin: ErrorOutOfHostMemory
 
 
-[ Prompt: 2512.2 t/s | Generation: 490.4 t/s ]
+[ Prompt: 2581.3 t/s | Generation: 494.3 t/s ]
 
 Exiting...

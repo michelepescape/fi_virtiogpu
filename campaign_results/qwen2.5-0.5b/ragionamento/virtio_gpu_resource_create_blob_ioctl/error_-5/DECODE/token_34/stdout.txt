@@ -26,6 +26,6 @@ available commands:
 
 The ball is in the yellow box. When someone moves the ball to the blue box, the ball is no longer in the yellow box but in the blue box.
 
-[ Prompt: 1721.1 t/s | Generation: 485.3 t/s ]
+[ Prompt: 1872.0 t/s | Generation: 436.5 t/s ]
 
 Exiting...
