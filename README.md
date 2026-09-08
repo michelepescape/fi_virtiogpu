@@ -3,7 +3,13 @@
 ## Indice
 
 - [1. Architettura del Sistema](#1-architettura-del-sistema)
-- [2. Fault Model](#2-fault-model)
+- [2. Modello di Guasto e Metodologia di Injection](#2-modello-di-guasto-e-metodologia-di-injection)
+  - [Tipologie di Guasto e Tassonomia degli Esiti](cosa-tipologie-di-guasto-e-tassonomia-degli-esiti)
+  - [Quando (Finestra Temporale e Ciclo di Vita LLM)](quando-finestra-temporale-e-ciclo-di-vita-llm)
+  - [Come (Architettura della Pipeline di Injection)](come-architettura-della-pipeline-di-injection)
+  - [Tipologie di Guasto e Tassonomia degli Esiti](#tipologie-di-guasto-e-tassonomia-degli-esiti)
+  - [Fasi di Injection](#fasi-di-injection)
+  - [Architettura della Pipeline di Injection](#architettura-della-pipeline-di-injection)
 - [3. Setup e Prerequisiti](#3-setup)
 - [4. Instrumentazione llama.cpp](#4-instrumentazione-llamacpp)
 - [5. Esecuzione della Campagna](#5-esecuzione-della-campagna)
@@ -29,24 +35,49 @@ utilizzando il meccanismo delle kprobe.
 
 <img width="600" height="800" alt="diagramma" src="https://github.com/user-attachments/assets/9e2ea790-3d82-4e9e-b499-4856d0edd2fb" />
 
-## 2. Fault Model
+## 2. Modello di Guasto e Metodologia di Injection
 
-Per ognuno dei punti di iniezione si iniettano i seguenti fallimenti:
+Le funzioni bersaglio individuate nel driver `virtio-gpu` comprendono sia chiamate di interfaccia userspace-kernel (le ioctl `virtio_gpu_execbuffer_ioctl` per la sottomissione di comandi e `virtio_gpu_resource_create_blob_ioctl` per l'allocazione di memoria condivisa), sia routine interne del driver individuate tramite analisi del codice sorgente e validazione empirica con stampe di ricognizione a runtime (`virtio_gpu_queue_fenced_ctrl_buffer` per la gestione delle virtqueue con suppporto a fence di sincronizzazione, e `virtio_gpu_cmd_submit` per l'invio dei comandi).
 
-- valori di ritorno errati/errori
-- delay
-- modifiche a valori di strutture dati
+### Tipologie di Guasto e Tassonomia degli Esiti
 
-Tuttavia, l'iniezione di un valore di ritorno errato non viene applicata alle funzioni di libreria virtio-gpu che prevedono un tipo di ritorno `void`i.
+Per ciascun punto di iniezione vengono applicate tre classi distinte di fallimento:
 
-Per ognuno dei fault ci si aspetta uno dei seguenti esiti:
+1. **Override dei valori di ritorno:** Simulazione di fallimenti hardware o driver sovrascrivendo il valore di ritorno della funzione con codici errno standard DRM come indicato in [Recommended IOCTL Return Values](https://docs.kernel.org/gpu/drm-uapi.html#recommended-ioctl-return-values):
+   - `-5 EIO`: Hardware I/O failure (GPU non responsiva o link interrotto).
+   - `-22 EINVAL`: Invalid argument combination (parametri non conformi).
+   - `-28 ENOSPC`: Out of memory / out of VRAM.  
+   *(Questa tipologia non è applicabile a `virtio_gpu_cmd_submit`, essendo una funzione con tipo di ritorno `void`).*
+2. **Latenze Temporali (Delays):** Iniezione di un ritardo sincrono di 1000ms nel `ret_handler` per simulare bus stall, saturazione dei canali o jitter hardware.
+3. **Corruzione dei Parametri e dei Descrittori:** Mutazioni mirate nell'`entry_handler` sui parametri o sulle strutture dati scambiate (es. azzeramento o troncamento dimensioni, indici di coda non validi, opcode sconosciuti, inversione di flag di memoria `MAPPABLE`, puntatori nulli e bit-flip nel payload DMA).
 
-- **Masked (Success)**: l'esecuzione continua senza errori apparenti e produce l'output corretto.
-- **SDC (Silent Data Corruption)**: l'esecuzione continua, ma l'output prodotto non è coerente con la baseline.
-- **App Error**: l'applicazione restituisce un codice d'errore e termina in maniera pulita.
-- **App Crash**: l'applicazione termina bruscamente.
-- **App Hang**: l'applicazione si blocca senza concludere la sua esecuzione e diventa non responsiva.
-- **Not Activated**: il fault non è stato iniettato con successo, ad esempio se la funzione bersaglio non è stata invocata.
+Per ogni run di iniezione, il comportamento del sistema viene classificato secondo la seguente tassonomia degli esiti:
+
+| Esito | Descrizione |
+| :--- | :--- |
+| **Masked (Success)** | L'esecuzione continua regolarmente senza anomalie e l'output generato corrisponde esattamente alla baseline. |
+| **SDC (Silent Data Corruption)** | L'inferenza termina con successo, ma il testo generato differisce dalla baseline. |
+| **App Error** | L'applicazione rileva un'anomalia, restituisce un codice di errore o logga un fallimento, terminando in modo controllato. |
+| **App Crash** | L'applicazione termina bruscamente con segnale anomalo (es. SIGSEGV, SIGBUS). |
+| **App Hang** | L'applicazione entra in stallo indefinito. |
+| **Not Activated** | La funzione target non è stata invocata durante la finestra di attivazione del trigger, lasciando l'esecuzione intatta. |
+
+### Fasi di Injection
+
+L'iniezione viene sincronizzata con le fasi caratteristiche del ciclo di vita dell'inferenza in `llama.cpp`:
+
+* **`MODEL_LOAD`**: Fase di avvio in cui i pesi del modello vengono caricati e mappati nei buffer GPU.
+* **`PREFILL`**: Elaborazione iniziale del prompt utente e generazione del primo token.
+* **`DECODE`**: Generazione sequenziale e autoregressiva dei singoli token successivi. Tramite il parametro `FI_TARGET_TOKEN`, è possibile selezionare l'istante di calcolo di uno specifico token $N$ (es. token 2 o 5).
+
+### Architettura della Pipeline di Injection
+
+L'infrastruttura sfrutta operazioni eseguite in spazio utente e spazio kernel:
+* `fault_injection.ko`: Modulo basato su Kretprobe (`entry_handler` per le corruzioni prima dell'elaborazione e `ret_handler` per ritardi ed errori di ritorno).
+*  Tramite la syscall `SYS_gettid` aggiunta nel codice instrumentato, `llama.cpp` acquisisce il proprio Thread ID (TID) e lo comunica al modulo nel parametro `target_pid`, garantendo che vengano colpite esclusivamente le operazioni del thread di inferenza e non i thread accessori o di background del sistema operativo.
+* In userspace si configurano anche i parametri desiderati per l'iniezione tramite variabili d'ambiente `FI_*` indicate prima di eseguire `llama-cli`. L'applicazione instrumentata arma il modulo scrivendo `1` nel file `trigger` su `sysfs` (`/sys/module/fault_injection/parameters/*`) prima dell'invio della richiesta al driver.
+
+Per l'analisi del codice C del modulo kernel, e la trattazione analitica dei 12 casi di corruzione dei descrittori, si rimanda a **[fault_injection.md](fault_injection.md)**.
 
 ## 3. Setup
 
@@ -75,7 +106,7 @@ Maggiori dettagli in [Instrumentazione llama.cpp](fault_injection.md#instrumenta
 Lo script `run_campaign.py` permette di eseguire automaticamente la vm, eseguire le run necessarie a raccogliere i dati di baseline
 ed eseguire la campagna effettiva di fallimenti.
 
-Per ogni modello vengono testati diverse tipologie di prompt per verificare che, anche al variare dell'input fornito, non vi siano differenze di
+Per ogni modello vengono testate diverse tipologie di prompt per verificare che, anche al variare dell'input fornito, non vi siano differenze di
 comportamento. Sono stati utilizzati i seguenti prompt:
 
 - Ragionamento: "A ball is in a yellow box. Someone moves the ball to a blue box. Where is the ball now?"
@@ -83,48 +114,31 @@ comportamento. Sono stati utilizzati i seguenti prompt:
 - Conoscenza, domanda a risposta multipla: "Question: Which planet is known as the Red Planet? A) Earth B) Mars C) Jupiter. Answer:"
 - Estrazione Dati: "Extract the names of the cities from this text as a JSON list: 'I visited Paris, then took a train to Berlin, and ended up in Rome.' JSON:"
 
-Per ogni prompt viene iniettato un fault in ognuna delle tre fasi `MODEL_LOAD`, `PREFILL` o `DECODE`.
-Per quanto riguarda i valori di ritorno errati, sono stati selezionati alcuni valori tra quelli attesi in caso di errore in una ioctl (https://docs.kernel.org/gpu/drm-uapi.html#recommended-ioctl-return-values). (Per la funzione `virtio_gpu_cmd_submit`, essendo di tipo `void`, questo guasto non viene iniettato). I valori scelti sono:
-
-- \-5 EIO ("The GPU died and couldn’t be resurrected through a reset. Modesetting hardware failures are signalled through the “link status” connector property.")
-- \-22 EINVAL ("Catch-all for anything that is an invalid argument combination which cannot work.")
-- \-28 ENOSPC ("Some drivers use this to differentiate “out of kernel memory” from “out of VRAM”")
-
-Per quanto riguarda il delay, viene iniettato un delay di 1s prima di ritornare dalla funzione target.
-
-Per quanto riguarda le modifiche alle strutture dati utilizzate come argomenti delle funzioni target, lo scopo sarebbe
-tentare di corrompere l'esecuzione con comandi spuri, dati errati o, in generale, modifiche non previste.
-
-A tale scopo, per ogni funzione target sono state individuate possibili "corruzioni" a valle di un'analisi dei parametri
-utilizzati dalla specifica funzione, pertanto questa tipologia di fault è diversa per ognuna di loro. [Dettagli in fault_injection.md](fault_injection.md#tipologie-di-guasto-iniettabili)
-
-Al momento, per ogni modello vengono eseguite delle run per ognuno dei fault individuati.
+Per ogni combinazione di modello, prompt e funzione target, vengono eseguite run per ciascuna delle tre categorie di guasto (errori di ritorno, delay e corruzioni) attraverso le fasi `MODEL_LOAD`, `PREFILL` e `DECODE`.
 
 Ogni run consiste nell'esecuzione di un singolo turno one-shot di inferenza. Si fornisce un prompt
 e se ne riceve l'output prima che llama-cli termini automaticamente. Contestualmente al comando è possibile fornire
-anche i parametri desiderati del fault come si vede di seguito:
+anche i parametri desiderati del fault tramite variabili d'ambiente come mostrato di seguito:
 
 ```sh
 FI_TARGET_PHASE=DECODE \
 FI_TARGET_TOKEN=5 \
-FI_TARGET_OCCURRENCE=1 \
-FI_BURST_LENGTH=1 \
 FI_FAULT_CODE=0 \
 FI_DELAY_MS=0 \
 FI_DESCRIPTOR_CORRUPTION=1 \
 strace -f -tt -e trace=ioctl \
 ~/llama.cpp/build/bin/llama-cli \
 --no-display-prompt     \
--c 2048     \ 
+-c 2048     \
 # -b e -ub necessari per evitare errori di allocazione in fase di caricamento del modello
--b 128     \ 
--ub 128     \  
+-b 128     \
+-ub 128     \
 -m ~/llama.cpp/models/qwen2.5-3b-instruct-q4_k_m.gguf     \
 -p "Question: Which planet is known as the Red Planet? 
 A) Earth B) Mars C) Jupiter. Answer:"     \
 -ngl 99 \
 # single-turn, evita la modalità conversazione e termina dopo aver eseguito 
--st \ 
+-st \
 --simple-io \
 --color off \
 --seed 1234 \
@@ -132,15 +146,10 @@ A) Earth B) Mars C) Jupiter. Answer:"     \
 --temp 0 
 ```
 
-Possiamo, quindi, scegliere in quale fase iniettare il fault. Nella fase di DECODE, utilizzando il parametro
-`FI_TARGET_TOKEN`, è possibile scegliere durante la generazione di quale token iniettare il guasto.
-Da notare che la fase di PREFILL termina con la generazione del primo token, per cui il guasto può
-essere iniettato dal secondo in poi. [Diagramma degli stati](fault_injection.md#macchina-a-stati-per-il-target-prefill-vs-decode)
+Nella fase di DECODE, tramite `FI_TARGET_TOKEN` è possibile scegliere durante la generazione di quale token iniettare il guasto.
+Da notare che la fase di PREFILL termina con la generazione del primo token, per cui il guasto in decode viene iniettato a partire dal secondo token. [Diagramma degli stati](fault_injection.md#macchina-a-stati-per-il-target-prefill-vs-decode).
 
-Con i parametri `FI_FAULT_CODE`, `FI_DELAY_MS`, `FI_DESCRIPTOR_CORRUPTION` si può gestire l'iniezione
-dei fault secondo quanto detto in precedenza.
-
-Per ogni run gli output creati hanno la seguente struttura:
+Per ogni run gli output creati hanno la seguente struttura su disco:
 
 ```sh
 campaign_results/
@@ -168,11 +177,11 @@ campaign_results/
 
 ## 6. Analisi dei Risultati
 
-La cartella `campaign_results` raccoglie l'output grezzo delle iniezioni (1396 esecuzioni valide).
+La cartella `campaign_results` raccoglie l'output grezzo delle iniezioni (1400 esecuzioni valide).
 L'elaborazione dei dati è demandata a due script di supporto:
 
 - `analyze_results.py`: processa i metadati (`meta.json`) e i log di sistema per classificare l'esito delle iniezioni (Masked, SDC, App Error, App Crash, App Hang).
-- `plot_results.py`: genera i grafici relativi alla distribuzione dei guasti (salvati in `plots/`).
+- `plot_results.py` / `plot_results_percentage.py`: generano i grafici relativi alla distribuzione dei guasti (salvati in `plots/`).
 
 I risultati aggregati sono documentati nel file dedicato:
 

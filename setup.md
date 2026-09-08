@@ -1,6 +1,6 @@
 # Setup Ambiente
 
-## 
+## Preparazione dell'Ambiente Host
 
 Sull'host creiamo una directory dedicata per l'ambiente e scarichiamo l'immagine di 
 Ubuntu Server 26.04.
@@ -52,7 +52,7 @@ Al suo interno inseriamo la stringa `NOME_UTENTE ALL=(ALL) NOPASSWD: ALL`
 <img width="535" height="386" alt="Screenshot From 2026-07-27 13-05-28" src="https://github.com/user-attachments/assets/bf3e5915-01ec-45c3-871b-15b33c8fb8fc" />
 
 
-Per la creazione della chaive ssh invece:
+Per la creazione della chiave ssh invece:
 
 ```sh
 ssh-keygen -t rsa -N ""

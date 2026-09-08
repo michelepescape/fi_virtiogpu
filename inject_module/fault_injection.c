@@ -169,9 +169,12 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
     void *submit_data = (void *)regs->si;
     uint32_t submit_size = (uint32_t)regs->dx;
     uint32_t submit_ctx = (uint32_t)regs->cx;
+    void *submit_objs = (void *)regs->r8;
+    void *submit_fence = (void *)regs->r9;
 
-    pr_info("fault_hook: [RECON] cmd_submit | ctx_id=%u, data_size=%u byte\n",
-            submit_ctx, submit_size);
+    pr_info("fault_hook: [RECON] cmd_submit | ctx_id=%u, data_size=%u byte, "
+            "objs=%px, fence=%px\n",
+            submit_ctx, submit_size, submit_objs, submit_fence);
 
     if (submit_data && submit_size > 0) {
       print_hex_dump(KERN_INFO, "fault_hook [RAW SUBMIT]: ", DUMP_PREFIX_OFFSET,
@@ -305,8 +308,8 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 
       case 2:
         // INVALID OPCODE — Corruzione del tipo di comando
-        // Simula un errore o corruzione dell'header sul
-        // bus. Esattamente 1 campo (hdr->type) sovrascritto con
+        // Simula un errore nel controller VirtIO o corruzione dell'header sul
+        // bus. Mutazione: esattamente 1 campo (hdr->type) sovrascritto con
         // valore invalido.
         if (vbuf->buf && vbuf->size >= sizeof(struct virtio_gpu_ctrl_hdr)) {
           struct virtio_gpu_ctrl_hdr *hdr =
@@ -341,11 +344,12 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
           data_size);
 
       /*
-       * Struttura del comando (24 byte, scoperta tramite RECON):
-       *   [0-3]   le32 resource_handle  (es. 0xBE = 190)
-       *   [4-7]   le32 padding/flags    (sempre 0)
-       *   [8-15]  le64 base_address     (costante per sessione)
-       *   [16-23] le64 data_offset      (incrementa ~126KB per dispatch)
+       * Struttura vkNotifyRingMESA (24 byte, protocollo Mesa Venus):
+       *   [0-3]   le32 cmd_type   (Opcode: 0xBE = * VK_COMMAND_TYPE_vkNotifyRingMESA_EXT) 
+       *   [4-7]   le32 cmd_flags  (Flag di comando: sempre 0) 
+       *   [8-15]  le64 ring       (Puntatore a 64 bit all'istanza del ring in user-space)
+       *   [16-19] le32 seqno      (Sequence Number: contatore progressivo di avanzamento)
+       *   [20-23] le32 flags (Flag di notifica: sempre 0)
        *
        * Registri ABI x86_64:
        *   rsi = void *data (puntatore al buffer sopra)
@@ -357,68 +361,31 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 
         switch (descriptor_corruption) {
         case 1: {
-          // OBIETTIVO: Bit-flip nel buffer circolare (Ring Buffer) condiviso.
-          // L'applicazione usa questo buffer per accodare i comandi per la GPU.
-          // Il payload di 24 byte intercettato contiene l'indirizzo base del buffer
-          // (base_addr) e l'indice di scrittura attuale (tail_off).
-          // Tentiamo di invertire 1 bit negli ultimi byte appena accodati,
-          // con la speranza di alterare un parametro senza rompere del tutto l'esecuzione,
-          // per osservare un potenziale SDC (spesso però viene mascherato o porta a crash).
-          uint64_t base_addr = *(uint64_t *)(payload + 8);
-          uint64_t tail_off = *(uint64_t *)(payload + 16);
-
-          if (base_addr && tail_off >= 16) {
-            void __user *target_user_addr =
-                (void __user *)(base_addr + tail_off - 8);
-            unsigned char byte_val;
-            if (copy_from_user_nofault(&byte_val, target_user_addr, 1) == 0) {
-              unsigned char corrupted = byte_val ^ 0x01;
-              if (copy_to_user_nofault(target_user_addr, &corrupted, 1) == 0) {
-                pr_info("[FI] Case 1 (SDC USER RING): Bit-flip at [0x%llx]: "
-                        "0x%02x -> 0x%02x\n",
-                        (unsigned long long)(base_addr + tail_off - 8),
-                        byte_val, corrupted);
-              }
-            }
-          }
+          // Troncamento pacchetto VirtIO / Buffer Underrun (data_size = 4).
+          // Riduciamo la dimensione dichiarata del comando a soli 4 byte (header Venus senza payload).
+          uint32_t old_size = (uint32_t)regs->dx;
+          regs->dx = 4;
+          pr_info("[FI] Case 1 (TRUNCATED SIZE 4B): data_size %u -> 4\n", old_size);
           break;
         }
 
         case 2: {
-          // OBIETTIVO: Invalidazione dell'identificativo del Ring Buffer (Hang).
-          // Sovrascriviamo l'identificativo della risorsa (byte 0-3) con 0xDEAD.
-          // In questo modo, quando il pacchetto arriva all'hypervisor, quest'ultimo
-          // non trova il ring associato e ignora la sottomissione.
-          // Questo spesso impedisce il completamento dell'operazione bloccando il programma (Hang).
-          uint32_t *res_handle = (uint32_t *)payload;
-          uint32_t old_handle = le32_to_cpu(*res_handle);
-          *res_handle = cpu_to_le32(0xDEAD);
-          pr_info(
-              "[FI] Case 2 (RES_ID INVALID): resource_handle 0x%x -> 0xDEAD\n",
-              old_handle);
+          // Violazione del protocollo Venus (Opcode Invalido 0xDEAD).
+          // Sovrascriviamo l'identificativo del comando Venus (byte 0-3). 
+          uint32_t *cmd_type = (uint32_t *)payload;
+          uint32_t old_cmd = le32_to_cpu(*cmd_type);
+          *cmd_type = cpu_to_le32(0xDEAD);
+          pr_info("[FI] Case 2 (CMD_TYPE INVALID): cmd_type 0x%x -> 0xDEAD\n",
+                  old_cmd);
           break;
         }
 
         case 3: {
-          // OBIETTIVO: Azzeramento parziale dei comandi nel Ring Buffer.
-          // Come nel Case 1, sfruttiamo base_addr e tail_off per accedere
-          // agli ultimi 16 byte accodati nel ring e li forziamo a zero.
-          // L'idea è testare la resilienza della GPU quando riceve un comando
-          // valido ma con parametri azzerati.
-          uint64_t base_addr = *(uint64_t *)(payload + 8);
-          uint64_t tail_off = *(uint64_t *)(payload + 16);
-
-          if (base_addr && tail_off >= 16) {
-            void __user *target_user_addr =
-                (void __user *)(base_addr + tail_off - 16);
-            unsigned char zeros[16] = {0};
-            if (copy_to_user_nofault(target_user_addr, zeros, sizeof(zeros)) ==
-                0) {
-              pr_info("[FI] Case 3 (SDC ZERO PARAMS): Cleared 16 bytes in ring "
-                      "at 0x%llx\n",
-                      (unsigned long long)(base_addr + tail_off - 16));
-            }
-          }
+          // Puntatore a descrittore nullo (ring pointer = NULL).
+          // Azzeriamo il puntatore a 64 bit all'istanza del ring (byte 8-15). 
+          uint64_t *ring_ptr = (uint64_t *)(payload + 8);
+          *ring_ptr = 0ULL;
+          pr_info("[FI] Case 3 (RING NULL): ring pointer zeroed (0x0)\n");
           break;
         }
         }
