@@ -1,3 +1,5 @@
+Progetto per l'esame di Real Time Systems and Industrial Applications A.A. 2025-2026
+
 # Fault Injection su VirtioGPU
 
 ## Indice
